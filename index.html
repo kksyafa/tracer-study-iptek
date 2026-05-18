@@ -4,264 +4,568 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracer Study IPTEK School Tangsel</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        success: '#10b981', // Emerald 500
+                        info: '#0ea5e9',    // Sky 500
+                        warning: '#f59e0b', // Amber 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js & DataLabels Plugin & PapaParse -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-stat { transition: 0.3s; border: none; border-radius: 10px; color: white; }
-        .card-stat:hover { transform: translateY(-5px); }
-        .bg-gradient-primary { background: linear-gradient(45deg, #007bff, #0056b3); }
-        .bg-gradient-success { background: linear-gradient(45deg, #28a745, #1e7e34); }
-        .bg-gradient-warning { background: linear-gradient(45deg, #ffc107, #d39e00); color: #212529 !important; }
-        .bg-gradient-info { background: linear-gradient(45deg, #17a2b8, #117a8b); }
-        .table-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #adminPanel { display: none; }
+        body { background-color: #f8fafc; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .stat-card { transition: all 0.3s ease; }
+        
+        /* Custom scrollbar for table */
+        .table-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body>
+<body class="text-slate-800 antialiased">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="#">🎓 Tracer Study IPTEK School</a>
-    <button class="btn btn-outline-light btn-sm" onclick="toggleLogin()">Login Admin</button>
-  </div>
-</nav>
-
-<div class="container mt-4">
-    
-    <div id="adminPanel" class="alert alert-warning border-0 shadow-sm">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <strong>Mode Admin:</strong> Silakan input data lulusan baru.
-            </div>
-            <a href="https://forms.gle/9xzU2cbZ9be8VQ4r5" target="_blank" class="btn btn-primary btn-sm">➕ Tambah Data Alumni</a>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card card-stat bg-gradient-primary p-3">
-                <h5>Total Alumni</h5>
-                <h2 id="totalAlumni">0</h2>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card card-stat bg-gradient-success p-3">
-                <h5>Bekerja</h5>
-                <h2 id="totalKerja">0</h2>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card card-stat bg-gradient-info p-3">
-                <h5>Kuliah</h5>
-                <h2 id="totalKuliah">0</h2>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card card-stat bg-gradient-warning p-3">
-                <h5>Wirausaha</h5>
-                <h2 id="totalWirausaha">0</h2>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="table-container h-100">
-                <div class="row g-2 mb-3">
-                    <div class="col-md-4">
-                        <select id="filterTahun" class="form-select" onchange="applyFilter()">
-                            <option value="">Semua Tahun Lulus</option>
-                        </select>
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
                     </div>
-                    <div class="col-md-4">
-                        <select id="filterJurusan" class="form-select" onchange="applyFilter()">
-                            <option value="">Semua Jurusan</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button onclick="downloadCSV()" class="btn btn-success w-100">📥 Download Data</button>
+                    <span class="font-bold text-lg text-slate-800 tracking-tight">Tracer Study IPTEK</span>
+                </div>
+                <div>
+                    <button onclick="toggleLogin()" class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-primary bg-slate-50 hover:bg-slate-100 px-4 py-2 rounded-full transition-colors border border-slate-200">
+                        <i class="fa-solid fa-lock text-xs"></i> Login Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div id="adminPanel" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 shadow-sm">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-shield-halved text-amber-500 text-xl"></i>
+                    <div>
+                        <h4 class="font-bold">Mode Admin Aktif</h4>
+                        <p class="text-sm opacity-90">Anda dapat menambahkan data alumni baru melalui form di bawah ini.</p>
                     </div>
                 </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Nama</th>
-                                <th>Tahun</th>
-                                <th>Jurusan</th>
-                                <th>Status</th>
-                                <th>Detail (Tempat)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dataTable">
+                <a href="https://forms.gle/9xzU2cbZ9be8VQ4r5" target="_blank" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Tambah Data Alumni
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm stat-card flex items-center gap-5">
+                <div class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Total Alumni</p>
+                    <h2 id="totalAlumni" class="text-3xl font-bold text-slate-800">0</h2>
+                </div>
+            </div>
+            
+            <!-- Kerja -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm stat-card flex items-center gap-5">
+                <div class="w-14 h-14 rounded-full bg-success/10 text-success flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Bekerja</p>
+                    <h2 id="totalKerja" class="text-3xl font-bold text-slate-800">0</h2>
+                </div>
+            </div>
+
+            <!-- Kuliah -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm stat-card flex items-center gap-5">
+                <div class="w-14 h-14 rounded-full bg-info/10 text-info flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-university"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Kuliah</p>
+                    <h2 id="totalKuliah" class="text-3xl font-bold text-slate-800">0</h2>
+                </div>
+            </div>
+
+            <!-- Wirausaha -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm stat-card flex items-center gap-5">
+                <div class="w-14 h-14 rounded-full bg-warning/10 text-warning flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Wirausaha</p>
+                    <h2 id="totalWirausaha" class="text-3xl font-bold text-slate-800">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Area Tabel (Kiri - Lebar 2/3) -->
+            <div class="lg:col-span-2 flex flex-col h-full">
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
+                    
+                    <!-- Area Filter & Tombol -->
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-3 flex-1">
+                            <div class="relative w-full sm:w-48">
+                                <i class="fa-solid fa-calendar-days absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <select id="filterTahun" class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer" onchange="applyFilter()">
+                                    <option value="">Semua Tahun</option>
+                                </select>
+                            </div>
+                            <div class="relative w-full sm:w-56">
+                                <i class="fa-solid fa-book absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <select id="filterJurusan" class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer" onchange="applyFilter()">
+                                    <option value="">Semua Jurusan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="downloadCSV()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-download"></i> Ekspor Data
+                        </button>
+                    </div>
+
+                    <!-- Area Tabel -->
+                    <div class="table-scroll overflow-x-auto p-0 flex-1">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-4">Nama Lengkap</th>
+                                    <th class="px-6 py-4">Tahun</th>
+                                    <th class="px-6 py-4">Jurusan</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Instansi/Tempat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTable" class="divide-y divide-slate-100">
+                                <!-- Data akan dirender disini oleh JS -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-3 text-primary"></i>
+                                        <p>Memuat data dari Google Sheets...</p>
+                                    </td>
+                                </tr>
                             </tbody>
-                    </table>
+                        </table>
+                    </div>
+
+                    <!-- Area Pagination -->
+                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-b-2xl">
+                        <div class="flex items-center text-sm text-slate-500 w-full sm:w-auto justify-center sm:justify-start">
+                            <span id="pageInfo">Menampilkan 0 data</span>
+                            <select id="rowsPerPageSelect" onchange="changeRowsPerPage()" class="ml-3 border border-slate-200 bg-white rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-1 focus:border-primary focus:ring-primary cursor-pointer">
+                                <option value="5">5 baris</option>
+                                <option value="10" selected>10 baris</option>
+                                <option value="25">25 baris</option>
+                                <option value="50">50 baris</option>
+                            </select>
+                        </div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px w-full sm:w-auto justify-center" aria-label="Pagination" id="paginationControls">
+                            <!-- Tombol Pagination akan diisi oleh JS -->
+                        </nav>
+                    </div>
+
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="table-container h-100">
-                <h5 class="text-center mb-3">Sebaran Alumni</h5>
-                <canvas id="statusChart"></canvas>
+
+            <!-- Area Chart (Kanan - Lebar 1/3) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 h-full flex flex-col">
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">Sebaran Alumni</h3>
+                    <p class="text-sm text-slate-500 mb-6">Persentase status lulusan berdasarkan filter</p>
+                    
+                    <div class="relative flex-1 flex items-center justify-center min-h-[300px]">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
             </div>
+            
         </div>
-    </div>
-</div>
+    </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-<script>
-    // --- KONFIGURASI ---
-    // GANTI URL INI DENGAN LINK CSV DARI GOOGLE SHEETS (PUBLISH TO WEB)
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzwhla__ordfb45-gjdSxKzvDp0Xoyhoxqv3mlsprTWJHKwbTGj7VfKAiJsbAs3373mSuaWXORMf5A/pub?output=csv'; 
+    <script>
+        // Daftarkan Plugin DataLabels agar persentase bisa muncul di chart
+        Chart.register(ChartDataLabels);
 
-    let rawData = [];
-    let myChart = null;
+        // --- KONFIGURASI ---
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzwhla__ordfb45-gjdSxKzvDp0Xoyhoxqv3mlsprTWJHKwbTGj7VfKAiJsbAs3373mSuaWXORMf5A/pub?output=csv'; 
 
-    // 1. Fetch Data saat halaman dimuat
-    window.onload = function() {
-        Papa.parse(SHEET_URL, {
-            download: true,
-            header: true,
-            complete: function(results) {
-                rawData = results.data;
-                populateFilters();
-                renderTable(rawData);
-                updateStats(rawData);
+        let rawData = [];
+        let filteredData = [];
+        let myChart = null;
+
+        // --- Variabel Pagination ---
+        let currentPage = 1;
+        let rowsPerPage = 10;
+
+        window.onload = function() {
+            Papa.parse(SHEET_URL, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    rawData = results.data;
+                    filteredData = [...rawData]; // Inisialisasi data terfilter
+                    populateFilters();
+                    renderTable();
+                    renderPagination();
+                    updateStats(filteredData);
+                },
+                error: function(error) {
+                    document.getElementById('dataTable').innerHTML = `
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Gagal memuat data. Periksa koneksi internet atau link Sheet.</td></tr>
+                    `;
+                }
+            });
+        };
+
+        function renderTable() {
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '';
+            
+            if(filteredData.length === 0 || (filteredData.length === 1 && !filteredData[0]['Nama Lengkap'])) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">Tidak ada data ditemukan.</td></tr>`;
+                return;
             }
-        });
-    };
 
-    // 2. Fungsi Render Tabel
-    function renderTable(data) {
-        const tbody = document.getElementById('dataTable');
-        tbody.innerHTML = '';
-        data.forEach(row => {
-            if(!row['Nama Lengkap']) return; // Skip baris kosong
-            let tr = `<tr>
-                <td>${row['Nama Lengkap']}</td>
-                <td>${row['Tahun Lulus']}</td>
-                <td>${row['Jurusan']}</td>
-                <td><span class="badge ${getStatusBadge(row['Status'])}">${row['Status']}</span></td>
-                <td>${row['Nama Tempat']}</td>
-            </tr>`;
-            tbody.innerHTML += tr;
-        });
-    }
+            // Batasi data sesuai Pagination
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const paginatedData = filteredData.slice(startIndex, endIndex);
 
-    // 3. Warna Badge Status
-    function getStatusBadge(status) {
-        if(!status) return 'bg-secondary';
-        status = status.toLowerCase();
-        if(status.includes('kerja')) return 'bg-success';
-        if(status.includes('kuliah')) return 'bg-info';
-        if(status.includes('wirausaha')) return 'bg-warning text-dark';
-        return 'bg-secondary';
-    }
+            paginatedData.forEach(row => {
+                if(!row['Nama Lengkap']) return; 
+                
+                // Menentukan warna badge status
+                let badgeClass = 'bg-slate-100 text-slate-700'; // Default
+                let icon = 'fa-circle-question';
+                let statusLower = (row['Status'] || '').toLowerCase();
+                
+                if(statusLower.includes('kerja')) {
+                    badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                    icon = 'fa-briefcase';
+                } else if(statusLower.includes('kuliah')) {
+                    badgeClass = 'bg-sky-100 text-sky-800 border-sky-200';
+                    icon = 'fa-university';
+                } else if(statusLower.includes('wirausaha')) {
+                    badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+                    icon = 'fa-store';
+                }
 
-    // 4. Update Statistik & Chart
-    function updateStats(data) {
-        let stats = { kerja: 0, kuliah: 0, wirausaha: 0, total: 0 };
-        
-        data.forEach(row => {
-            if(!row['Status']) return;
-            stats.total++;
-            let s = row['Status'].toLowerCase();
-            if(s.includes('kerja')) stats.kerja++;
-            else if(s.includes('kuliah')) stats.kuliah++;
-            else if(s.includes('wirausaha')) stats.wirausaha++;
-        });
-
-        document.getElementById('totalAlumni').innerText = stats.total;
-        document.getElementById('totalKerja').innerText = stats.kerja;
-        document.getElementById('totalKuliah').innerText = stats.kuliah;
-        document.getElementById('totalWirausaha').innerText = stats.wirausaha;
-
-        // Render Chart
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Bekerja', 'Kuliah', 'Wirausaha', 'Lainnya'],
-                datasets: [{
-                    data: [stats.kerja, stats.kuliah, stats.wirausaha, stats.total - (stats.kerja+stats.kuliah+stats.wirausaha)],
-                    backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#6c757d']
-                }]
-            }
-        });
-    }
-
-    // 5. Populate Filter Dropdown
-    function populateFilters() {
-        let tahunSet = new Set();
-        let jurusanSet = new Set();
-        rawData.forEach(row => {
-            if(row['Tahun Lulus']) tahunSet.add(row['Tahun Lulus']);
-            if(row['Jurusan']) jurusanSet.add(row['Jurusan']);
-        });
-
-        const selTahun = document.getElementById('filterTahun');
-        const selJurusan = document.getElementById('filterJurusan');
-        
-        tahunSet.forEach(t => selTahun.innerHTML += `<option value="${t}">${t}</option>`);
-        jurusanSet.forEach(j => selJurusan.innerHTML += `<option value="${j}">${j}</option>`);
-    }
-
-    // 6. Logic Filter
-    function applyFilter() {
-        const t = document.getElementById('filterTahun').value;
-        const j = document.getElementById('filterJurusan').value;
-
-        const filtered = rawData.filter(row => {
-            return (t === '' || row['Tahun Lulus'] === t) &&
-                   (j === '' || row['Jurusan'] === j);
-        });
-
-        renderTable(filtered);
-        updateStats(filtered);
-    }
-
-    // 7. Download CSV
-    function downloadCSV() {
-        let csv = 'Nama,Tahun,Jurusan,Status,Tempat\n';
-        // Ambil data yang sedang tampil (sudah terfilter atau belum)
-        // Disini kita ambil rawData lalu filter ulang sesuai selection agar akurat
-        const t = document.getElementById('filterTahun').value;
-        const j = document.getElementById('filterJurusan').value;
-        
-        const dataToExport = rawData.filter(row => {
-            return (t === '' || row['Tahun Lulus'] === t) &&
-                   (j === '' || row['Jurusan'] === j);
-        });
-
-        dataToExport.forEach(row => {
-            if(!row['Nama Lengkap']) return;
-            csv += `"${row['Nama Lengkap']}","${row['Tahun Lulus']}","${row['Jurusan']}","${row['Status']}","${row['Nama Tempat']}"\n`;
-        });
-
-        const hiddenElement = document.createElement('a');
-        hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
-        hiddenElement.target = '_blank';
-        hiddenElement.download = 'Data_Tracer_Study.csv';
-        hiddenElement.click();
-    }
-
-    // 8. Simple Login Logic
-    function toggleLogin() {
-        // Ini adalah keamanan sederhana sisi klien (Client-side).
-        // Jangan gunakan ini untuk data yang SANGAT rahasia.
-        const pass = prompt("Masukkan Password Admin:");
-        if(pass === "iptek123") { // GANTI PASSWORD DISINI
-            document.getElementById('adminPanel').style.display = 'block';
-            alert("Login Berhasil! Panel Admin terbuka.");
-        } else {
-            alert("Password Salah");
+                let tr = `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-800">${row['Nama Lengkap']}</td>
+                    <td class="px-6 py-4 text-slate-600">${row['Tahun Lulus'] || '-'}</td>
+                    <td class="px-6 py-4 text-slate-600">${row['Jurusan'] || '-'}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${badgeClass}">
+                            <i class="fa-solid ${icon} text-[10px]"></i> ${row['Status'] || '-'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600 truncate max-w-xs" title="${row['Nama Tempat'] || '-'}">${row['Nama Tempat'] || '-'}</td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
         }
-    }
-</script>
 
+        // --- Fungsi Logika Pagination ---
+        function renderPagination() {
+            const actualDataLength = filteredData.filter(r => r['Nama Lengkap']).length;
+            const totalPages = Math.ceil(actualDataLength / rowsPerPage);
+            const paginationContainer = document.getElementById('paginationControls');
+            const pageInfo = document.getElementById('pageInfo');
+
+            if (actualDataLength === 0) {
+                paginationContainer.innerHTML = '';
+                pageInfo.innerHTML = 'Menampilkan 0 data';
+                return;
+            }
+
+            const startCount = (currentPage - 1) * rowsPerPage + 1;
+            const endCount = Math.min(currentPage * rowsPerPage, actualDataLength);
+            
+            pageInfo.innerHTML = `Menampilkan <span class="font-medium text-slate-800">${startCount}</span> - <span class="font-medium text-slate-800">${endCount}</span> dari <span class="font-medium text-slate-800">${actualDataLength}</span>`;
+
+            let buttonsHTML = '';
+
+            // Tombol Previous
+            buttonsHTML += `<button onclick="changePage(${currentPage - 1})" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}" ${currentPage === 1 ? 'disabled' : ''}>
+                                <i class="fa-solid fa-chevron-left text-xs"></i>
+                            </button>`;
+
+            // Render Angka Halaman Dinamis (Batasi Tampilan Angka)
+            let startPage = Math.max(1, currentPage - 1);
+            let endPage = Math.min(totalPages, currentPage + 1);
+
+            if (startPage > 1) {
+                buttonsHTML += `<button onclick="changePage(1)" class="relative inline-flex items-center px-3 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">1</button>`;
+                if (startPage > 2) buttonsHTML += `<span class="relative inline-flex items-center px-3 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-400">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                     buttonsHTML += `<button aria-current="page" class="z-10 bg-primary border-primary text-white relative inline-flex items-center px-3 py-2 border text-sm font-medium">${i}</button>`;
+                } else {
+                     buttonsHTML += `<button onclick="changePage(${i})" class="bg-white border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors relative inline-flex items-center px-3 py-2 border text-sm font-medium">${i}</button>`;
+                }
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) buttonsHTML += `<span class="relative inline-flex items-center px-3 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-400">...</span>`;
+                buttonsHTML += `<button onclick="changePage(${totalPages})" class="relative inline-flex items-center px-3 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">${totalPages}</button>`;
+            }
+
+            // Tombol Next
+            buttonsHTML += `<button onclick="changePage(${currentPage + 1})" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}" ${currentPage === totalPages ? 'disabled' : ''}>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>`;
+
+            paginationContainer.innerHTML = buttonsHTML;
+        }
+
+        function changePage(page) {
+            const actualDataLength = filteredData.filter(r => r['Nama Lengkap']).length;
+            const totalPages = Math.ceil(actualDataLength / rowsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderTable();
+            renderPagination();
+        }
+
+        function changeRowsPerPage() {
+            const select = document.getElementById('rowsPerPageSelect');
+            rowsPerPage = parseInt(select.value);
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+        }
+
+        function updateStats(data) {
+            let stats = { kerja: 0, kuliah: 0, wirausaha: 0, total: 0 };
+            
+            data.forEach(row => {
+                if(!row['Nama Lengkap'] || !row['Status']) return;
+                stats.total++;
+                let s = row['Status'].toLowerCase();
+                if(s.includes('kerja')) stats.kerja++;
+                else if(s.includes('kuliah')) stats.kuliah++;
+                else if(s.includes('wirausaha')) stats.wirausaha++;
+            });
+
+            // Animasi perhitungan angka (Opsional tapi mempercantik)
+            document.getElementById('totalAlumni').innerText = stats.total;
+            document.getElementById('totalKerja').innerText = stats.kerja;
+            document.getElementById('totalKuliah').innerText = stats.kuliah;
+            document.getElementById('totalWirausaha').innerText = stats.wirausaha;
+
+            let lainnya = stats.total - (stats.kerja + stats.kuliah + stats.wirausaha);
+            
+            // Render Chart
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bekerja', 'Kuliah', 'Wirausaha', 'Lainnya'],
+                    datasets: [{
+                        data: [stats.kerja, stats.kuliah, stats.wirausaha, lainnya],
+                        backgroundColor: [
+                            '#10b981', // emerald-500
+                            '#0ea5e9', // sky-500
+                            '#f59e0b', // amber-500
+                            '#cbd5e1'  // slate-300
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%', // Ketebalan donat
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: { family: "'Inter', sans-serif", size: 12 }
+                            }
+                        },
+                        // Konfigurasi plugin datalabels untuk menampilkan Persentase
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                family: "'Inter', sans-serif",
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: (value, context) => {
+                                if(value === 0) return null; // Sembunyikan label jika 0
+                                let sum = 0;
+                                let dataArr = context.chart.data.datasets[0].data;
+                                dataArr.forEach(data => { sum += data; });
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return percentage;
+                            },
+                            // Tambahkan text shadow agar terlihat jelas di warna cerah
+                            textShadowBlur: 4,
+                            textShadowColor: 'rgba(0,0,0,0.3)'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    let sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    let percentage = sum > 0 ? ((value * 100) / sum).toFixed(1) + "%" : "0%";
+                                    return ` ${label}: ${value} Orang (${percentage})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function populateFilters() {
+            let tahunSet = new Set();
+            let jurusanSet = new Set();
+            
+            rawData.forEach(row => {
+                if(row['Tahun Lulus']) tahunSet.add(row['Tahun Lulus'].trim());
+                if(row['Jurusan']) jurusanSet.add(row['Jurusan'].trim());
+            });
+
+            const selTahun = document.getElementById('filterTahun');
+            const selJurusan = document.getElementById('filterJurusan');
+            
+            // Sort agar berurutan
+            Array.from(tahunSet).sort().reverse().forEach(t => selTahun.innerHTML += `<option value="${t}">${t}</option>`);
+            Array.from(jurusanSet).sort().forEach(j => selJurusan.innerHTML += `<option value="${j}">${j}</option>`);
+        }
+
+        function applyFilter() {
+            const t = document.getElementById('filterTahun').value;
+            const j = document.getElementById('filterJurusan').value;
+
+            filteredData = rawData.filter(row => {
+                let matchTahun = t === '' || (row['Tahun Lulus'] && row['Tahun Lulus'].trim() === t);
+                let matchJurusan = j === '' || (row['Jurusan'] && row['Jurusan'].trim() === j);
+                return matchTahun && matchJurusan;
+            });
+
+            // Reset ke halaman pertama saat melakukan filter
+            currentPage = 1;
+
+            renderTable();
+            renderPagination();
+            updateStats(filteredData);
+        }
+
+        function downloadCSV() {
+            let csv = 'Nama Lengkap,Tahun Lulus,Jurusan,Status,Nama Tempat\n';
+            
+            const t = document.getElementById('filterTahun').value;
+            const j = document.getElementById('filterJurusan').value;
+            
+            const dataToExport = rawData.filter(row => {
+                let matchTahun = t === '' || (row['Tahun Lulus'] && row['Tahun Lulus'].trim() === t);
+                let matchJurusan = j === '' || (row['Jurusan'] && row['Jurusan'].trim() === j);
+                return matchTahun && matchJurusan;
+            });
+
+            dataToExport.forEach(row => {
+                if(!row['Nama Lengkap']) return;
+                // Hilangkan koma/kutip dalam string agar format CSV tidak rusak
+                let nama = (row['Nama Lengkap']||'').replace(/"/g, '""');
+                let tahun = (row['Tahun Lulus']||'');
+                let jurusan = (row['Jurusan']||'').replace(/"/g, '""');
+                let status = (row['Status']||'');
+                let tempat = (row['Nama Tempat']||'').replace(/"/g, '""');
+                
+                csv += `"${nama}","${tahun}","${jurusan}","${status}","${tempat}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Data_Tracer_Study_Terfilter.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function toggleLogin() {
+            // Catatan: Ini adalah proteksi sangat sederhana di sisi client
+            const panel = document.getElementById('adminPanel');
+            if(panel.classList.contains('hidden')) {
+                const pass = prompt("Masukkan Password Admin:");
+                if(pass === "iptek123") {
+                    panel.classList.remove('hidden');
+                    // Custom non-alert message box for better UX
+                    showToast("Login berhasil! Mode Admin diaktifkan.", "success");
+                } else if(pass !== null) {
+                    showToast("Password yang Anda masukkan salah.", "error");
+                }
+            } else {
+                panel.classList.add('hidden');
+                showToast("Mode Admin dinonaktifkan.", "info");
+            }
+        }
+
+        // Custom Toast untuk menggantikan alert() bawaan browser
+        function showToast(message, type = "success") {
+            const toast = document.createElement("div");
+            
+            let bgClass = "bg-emerald-500";
+            let icon = "fa-check-circle";
+            if(type === "error") { bgClass = "bg-red-500"; icon = "fa-triangle-exclamation"; }
+            else if(type === "info") { bgClass = "bg-sky-500"; icon = "fa-info-circle"; }
+
+            toast.className = `fixed bottom-5 right-5 ${bgClass} text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 transition-opacity duration-300 z-[100] text-sm font-medium`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i> ${message}`;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
